@@ -11,6 +11,7 @@ Polyglot microservices demo - C#, Node.js, Python. Services communicate via gRPC
 | email-service | Python | 5003 | Sends order confirmation emails |
 | shipping-service | C# (.NET 10) | 5004 | Returns shipping quotes and issues tracking IDs |
 | currency-service | Node.js | 5005 | Converts money between currencies using live exchange rates |
+| payment-service | C# (.NET 10) | 5006 | Charges credit cards via Stripe |
 
 ## Local Development (Docker Compose)
 
@@ -21,7 +22,7 @@ cd deployments/docker
 docker compose up --build
 ```
 
-Services will be available at `localhost:5001` (cart), `localhost:5002` (catalog), `localhost:5003` (email), `localhost:5004` (shipping), and `localhost:5005` (currency).
+Services will be available at `localhost:5001` (cart), `localhost:5002` (catalog), `localhost:5003` (email), `localhost:5004` (shipping), `localhost:5005` (currency), and `localhost:5006` (payment).
 
 Email is in mock mode by default - sends are logged to stdout, no SMTP required.
 
@@ -30,6 +31,8 @@ catalog-service seeds 10 products into PostgreSQL on first startup automatically
 shipping-service uses a mock implementation - quotes are calculated from item count and destination, tracking IDs are generated locally. No external carrier API or secrets required.
 
 currency-service fetches live USD-based exchange rates from [fawazahmed0/exchange-api](https://github.com/fawazahmed0/exchange-api) (no API key required). Rates are cached until midnight UTC with a stale fallback. An opossum circuit breaker protects against API outages, with automatic failover to the Cloudflare mirror.
+
+payment-service uses [Stripe](https://stripe.com) in test mode - requires a free Stripe account and a `sk_test_...` key. Set `STRIPE_SECRET_KEY` in docker-compose for local dev. Card declines surface as `INVALID_ARGUMENT`; transient Stripe errors are retried up to 3 times with exponential backoff via Polly. Use test card `4242 4242 4242 4242` to simulate a successful charge.
 
 ## Deploy to AKS
 
@@ -41,6 +44,13 @@ currency-service fetches live USD-based exchange rates from [fawazahmed0/exchang
 ```bash
 kubectl create secret generic cart-service-secrets \
   --from-literal=redis-addr="<host>.redis.cache.windows.net:6380,password=<key>,ssl=True,abortConnect=False" \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+**payment-service** (Stripe test key):
+```bash
+kubectl create secret generic payment-service-secrets \
+  --from-literal=stripe-secret-key="sk_test_<your_test_key>" \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
@@ -85,6 +95,7 @@ online-boutique/
 │   ├── catalog-service/    # Node.js gRPC service
 │   ├── currency-service/   # Node.js gRPC service
 │   ├── email-service/      # Python gRPC service
+│   ├── payment-service/    # C# gRPC service
 │   └── shipping-service/   # C# gRPC service
 ├── deployments/
 │   ├── docker/

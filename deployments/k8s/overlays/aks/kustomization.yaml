@@ -3,6 +3,9 @@ kind: Kustomization
 resources:
   - ../../base
 
+components:
+  - ../../components/workload-identity
+
 patches:
   - path: email-service-patch.yaml
     target:
@@ -12,3 +15,7 @@ patches:
     target:
       kind: Deployment
       name: catalog-service
+  - path: payment-service-patch.yaml
+    target:
+      kind: Deployment
+      name: payment-service

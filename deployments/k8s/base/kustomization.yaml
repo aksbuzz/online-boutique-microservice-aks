@@ -5,4 +5,5 @@ resources:
   - catalog-service/
   - currency-service/
   - email-service/
+  - payment-service/
   - shipping-service/

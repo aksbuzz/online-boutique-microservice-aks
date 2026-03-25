@@ -60,3 +60,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5005:5005"
+
+  payment-service:
+    build:
+      context: ../../src/payment-service
+      dockerfile: Dockerfile
+    ports:
+      - "5006:5006"
+    environment:
+      - STRIPE_SECRET_KEY=sk_test_<your_test_key>
