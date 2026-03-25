@@ -12,6 +12,7 @@ Polyglot microservices demo - C#, Node.js, Python. Services communicate via gRPC
 | shipping-service | C# (.NET 10) | 5004 | Returns shipping quotes and issues tracking IDs |
 | currency-service | Node.js | 5005 | Converts money between currencies using live exchange rates |
 | payment-service | C# (.NET 10) | 5006 | Charges credit cards via Stripe |
+| recommendation-service | Python | 5007 | Recommends products based on cart contents using category co-occurrence |
 
 ## Local Development (Docker Compose)
 
@@ -22,7 +23,7 @@ cd deployments/docker
 docker compose up --build
 ```
 
-Services will be available at `localhost:5001` (cart), `localhost:5002` (catalog), `localhost:5003` (email), `localhost:5004` (shipping), `localhost:5005` (currency), and `localhost:5006` (payment).
+Services will be available at `localhost:5001` (cart), `localhost:5002` (catalog), `localhost:5003` (email), `localhost:5004` (shipping), `localhost:5005` (currency), `localhost:5006` (payment) and `localhost:5005` (recommendation).
 
 Email is in mock mode by default - sends are logged to stdout, no SMTP required.
 
@@ -33,6 +34,8 @@ shipping-service uses a mock implementation - quotes are calculated from item co
 currency-service fetches live USD-based exchange rates from [fawazahmed0/exchange-api](https://github.com/fawazahmed0/exchange-api) (no API key required). Rates are cached until midnight UTC with a stale fallback. An opossum circuit breaker protects against API outages, with automatic failover to the Cloudflare mirror.
 
 payment-service uses [Stripe](https://stripe.com) in test mode - requires a free Stripe account and a `sk_test_...` key. Set `STRIPE_SECRET_KEY` in docker-compose for local dev. Card declines surface as `INVALID_ARGUMENT`; transient Stripe errors are retried up to 3 times with exponential backoff via Polly. Use test card `4242 4242 4242 4242` to simulate a successful charge.
+
+recommendation-service calls catalog-service via gRPC to fetch product data, caches it for 5 minutes, and returns up to 5 products sharing categories with the cart. Returns an empty list if catalog-service is unavailable.
 
 ## Deploy to AKS
 
@@ -91,18 +94,19 @@ kubectl get services
 ```
 online-boutique/
 ├── src/
-│   ├── cart-service/       # C# gRPC service
-│   ├── catalog-service/    # Node.js gRPC service
-│   ├── currency-service/   # Node.js gRPC service
-│   ├── email-service/      # Python gRPC service
-│   ├── payment-service/    # C# gRPC service
-│   └── shipping-service/   # C# gRPC service
+│   ├── cart-service/             # C# gRPC service
+│   ├── catalog-service/          # Node.js gRPC service
+│   ├── currency-service/         # Node.js gRPC service
+│   ├── email-service/            # Python gRPC service
+│   ├── payment-service/          # C# gRPC service
+│   └── shipping-service/         # C# gRPC service
+│   └── recommendation-service/   # Python gRPC service
 ├── deployments/
 │   ├── docker/
 │   │   └── docker-compose.yml
 │   └── k8s/
-│       ├── base/           # shared manifests
-│       ├── components/     # reusable mix-ins (workload-identity)
-│       └── overlays/aks/   # AKS-specific config + patches
-└── docs/plans/             # design docs and implementation plans
+│       ├── base/                 # shared manifests
+│       ├── components/           # reusable mix-ins (workload-identity)
+│       └── overlays/aks/         # AKS-specific config + patches
+└── docs/plans/                   # design docs and implementation plans
 ```

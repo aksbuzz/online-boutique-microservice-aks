@@ -6,4 +6,5 @@ resources:
   - currency-service/
   - email-service/
   - payment-service/
+  - recommendation-service/
   - shipping-service/

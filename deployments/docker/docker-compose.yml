@@ -69,3 +69,14 @@ services:
       - "5006:5006"
     environment:
       - STRIPE_SECRET_KEY=sk_test_<your_test_key>
+
+  recommendation-service:
+    build:
+      context: ../../src/recommendation-service
+      dockerfile: Dockerfile
+    ports:
+      - "5007:5007"
+    environment:
+      - CATALOG_SERVICE_ADDR=catalog-service:5002
+    depends_on:
+      - catalog-service

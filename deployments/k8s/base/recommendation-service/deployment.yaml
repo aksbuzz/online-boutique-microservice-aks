@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendation-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: recommendation-service
+  template:
+    metadata:
+      labels:
+        app: recommendation-service
+    spec:
+      containers:
+        - name: recommendation-service
+          image: recommendation-service:latest
+          ports:
+            - containerPort: 5007
+          env:
+            - name: CATALOG_SERVICE_ADDR
+              value: "catalog-service:5002"
+          livenessProbe:
+            grpc:
+              port: 5007
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            grpc:
+              port: 5007
+            initialDelaySeconds: 5
+            periodSeconds: 10
