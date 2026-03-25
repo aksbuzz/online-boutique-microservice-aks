@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: currency-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: currency-service
+  template:
+    metadata:
+      labels:
+        app: currency-service
+    spec:
+      containers:
+        - name: currency-service
+          image: currency-service:latest
+          ports:
+            - containerPort: 5005
+          livenessProbe:
+            grpc:
+              port: 5005
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            grpc:
+              port: 5005
+            initialDelaySeconds: 5
+            periodSeconds: 10

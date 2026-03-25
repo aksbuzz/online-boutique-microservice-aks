@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/shipping-service/" />
+  <Folder Name="/src/shipping-service/src/">
+    <Project Path="src/shipping-service.csproj" />
+  </Folder>
+  <Project Path="d:/GrpcService1/GrpcService1.csproj" />
+</Solution>

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: email-service
+  template:
+    metadata:
+      labels:
+        app: email-service
+    spec:
+      containers:
+        - name: email-service
+          image: email-service:latest
+          ports:
+            - containerPort: 5003
+          env:
+            - name: EMAIL_BACKEND
+              value: "log"
+          livenessProbe:
+            grpc:
+              port: 5003
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            grpc:
+              port: 5003
+            initialDelaySeconds: 5
+            periodSeconds: 10

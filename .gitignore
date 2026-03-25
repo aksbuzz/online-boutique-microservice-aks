@@ -1,0 +1,46 @@
+# ── C# / .NET ──────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.nupkg
+*.snupkg
+
+# ── Node.js ────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.npm/
+dist/
+
+# ── Python ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.pytest_cache/
+# generated gRPC stubs
+*_pb2.py
+*_pb2_grpc.py
+
+# ── Docker ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Kubernetes / secrets ───────────────────────────────────
+*.env
+secrets.env
+
+# ── OS ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDEs ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp

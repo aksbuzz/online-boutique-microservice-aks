@@ -1,0 +1,62 @@
+services:
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: catalog
+      POSTGRES_USER: catalog_user
+      POSTGRES_PASSWORD: catalog_pass
+
+  cart-service:
+    build:
+      context: ../../src/cart-service
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+
+  catalog-service:
+    build:
+      context: ../../src/catalog-service
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    environment:
+      - PG_HOST=postgres
+      - PG_DATABASE=catalog
+      - PG_USER=catalog_user
+      - PG_PASSWORD=catalog_pass
+    depends_on:
+      - postgres
+
+  email-service:
+    build:
+      context: ../../src/email-service
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    environment:
+      - EMAIL_BACKEND=log
+
+  shipping-service:
+    build:
+      context: ../../src/shipping-service
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004"
+
+  currency-service:
+    build:
+      context: ../../src/currency-service
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"

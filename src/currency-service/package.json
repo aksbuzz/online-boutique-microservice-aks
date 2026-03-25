@@ -1,0 +1,15 @@
+{
+  "name": "currency-service",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
+    "grpc-health-check": "^2.1.0",
+    "opossum": "^9.0.0"
+  }
+}

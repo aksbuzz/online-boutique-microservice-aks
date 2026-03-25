@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+spec:
+  template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: catalog-service-sa
+      containers:
+        - name: catalog-service
+          env:
+            - name: PG_HOST
+              value: "<your-server>.postgres.database.azure.com"
+            - name: PG_DATABASE
+              value: "catalog"
+            - name: PG_USER
+              value: "<managed-identity-name>"

@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/cart-service/" />
+  <Folder Name="/src/cart-service/src/">
+    <Project Path="src/cart-service.csproj" />
+  </Folder>
+</Solution>

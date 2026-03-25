@@ -1,0 +1,102 @@
+[
+  {
+    "id": "OLJCESPC7Z",
+    "name": "Sunglasses",
+    "description": "Add a modern touch to your outfits with these sleek aviator sunglasses.",
+    "picture": "/static/img/products/sunglasses.jpg",
+    "price_currency_code": "USD",
+    "price_units": 19,
+    "price_nanos": 990000000,
+    "categories": ["accessories"]
+  },
+  {
+    "id": "66VCHSJNUP",
+    "name": "Tank Top",
+    "description": "Soft, 100% organic cotton tank top — ideal for warm days.",
+    "picture": "/static/img/products/tank-top.jpg",
+    "price_currency_code": "USD",
+    "price_units": 18,
+    "price_nanos": 990000000,
+    "categories": ["clothing", "tops"]
+  },
+  {
+    "id": "1YMWWN1N4O",
+    "name": "Watch",
+    "description": "Minimalist stainless steel watch with leather strap.",
+    "picture": "/static/img/products/watch.jpg",
+    "price_currency_code": "USD",
+    "price_units": 109,
+    "price_nanos": 990000000,
+    "categories": ["accessories"]
+  },
+  {
+    "id": "L9ECAV7KIM",
+    "name": "Loafers",
+    "description": "Classic penny loafers in genuine leather — works with anything.",
+    "picture": "/static/img/products/loafers.jpg",
+    "price_currency_code": "USD",
+    "price_units": 89,
+    "price_nanos": 990000000,
+    "categories": ["footwear"]
+  },
+  {
+    "id": "2ZYFJ3GM2N",
+    "name": "Hairdryer",
+    "description": "Professional-grade hairdryer with ionic technology.",
+    "picture": "/static/img/products/hairdryer.jpg",
+    "price_currency_code": "USD",
+    "price_units": 24,
+    "price_nanos": 990000000,
+    "categories": ["beauty", "hair"]
+  },
+  {
+    "id": "0PUK6V6EV0",
+    "name": "Candle Holder",
+    "description": "Sleek geometric brass candle holder — perfect for a dinner centrepiece.",
+    "picture": "/static/img/products/candle-holder.jpg",
+    "price_currency_code": "USD",
+    "price_units": 18,
+    "price_nanos": 990000000,
+    "categories": ["home", "decor"]
+  },
+  {
+    "id": "LS4PSXUNUM",
+    "name": "Salt & Pepper Shakers",
+    "description": "Modern ceramic salt and pepper shakers in matte white.",
+    "picture": "/static/img/products/salt-pepper.jpg",
+    "price_currency_code": "USD",
+    "price_units": 18,
+    "price_nanos": 490000000,
+    "categories": ["kitchen"]
+  },
+  {
+    "id": "9SIQT8TOJO",
+    "name": "Bamboo Glass Jar",
+    "description": "Elegant glass jar with a bamboo lid — great for dry goods.",
+    "picture": "/static/img/products/glass-jar.jpg",
+    "price_currency_code": "USD",
+    "price_units": 5,
+    "price_nanos": 490000000,
+    "categories": ["kitchen"]
+  },
+  {
+    "id": "6E92ZMYYFZ",
+    "name": "Mug",
+    "description": "Oversized stoneware mug — holds 16 oz and keeps your coffee warm.",
+    "picture": "/static/img/products/mug.jpg",
+    "price_currency_code": "USD",
+    "price_units": 8,
+    "price_nanos": 990000000,
+    "categories": ["kitchen"]
+  },
+  {
+    "id": "HQTGWGPNH4",
+    "name": "Desk Plant",
+    "description": "Low-maintenance succulent in a terracotta pot — liven up your workspace.",
+    "picture": "/static/img/products/plant.jpg",
+    "price_currency_code": "USD",
+    "price_units": 12,
+    "price_nanos": 490000000,
+    "categories": ["home"]
+  }
+]
