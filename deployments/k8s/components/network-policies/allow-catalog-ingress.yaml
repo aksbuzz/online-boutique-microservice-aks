@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-catalog-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app: catalog-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: checkout-service
+        - podSelector:
+            matchLabels:
+              app: recommendation-service
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: envoy
+      ports:
+        - port: 5002

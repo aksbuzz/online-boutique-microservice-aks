@@ -12,6 +12,7 @@ spec:
       labels:
         app: currency-service
     spec:
+      serviceAccountName: currency-service-sa
       containers:
         - name: currency-service
           image: currency-service:latest

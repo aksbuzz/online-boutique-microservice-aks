@@ -9,3 +9,5 @@ resources:
   - payment-service/
   - recommendation-service/
   - shipping-service/
+  - frontend-service/
+  - envoy/

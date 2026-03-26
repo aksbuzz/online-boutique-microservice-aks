@@ -12,6 +12,7 @@ spec:
       labels:
         app: recommendation-service
     spec:
+      serviceAccountName: recommendation-service-sa
       containers:
         - name: recommendation-service
           image: recommendation-service:latest

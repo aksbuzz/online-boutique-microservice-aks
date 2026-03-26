@@ -4,7 +4,11 @@ metadata:
   name: payment-service
 spec:
   template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
     spec:
+      serviceAccountName: payment-service-sa
       containers:
         - name: payment-service
           env:

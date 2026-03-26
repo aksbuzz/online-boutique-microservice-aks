@@ -12,6 +12,7 @@ spec:
       labels:
         app: checkout-service
     spec:
+      serviceAccountName: checkout-service-sa
       containers:
         - name: checkout-service
           image: checkout-service:latest

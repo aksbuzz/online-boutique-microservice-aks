@@ -101,3 +101,26 @@ services:
       - email-service
       - payment-service
       - shipping-service
+
+  envoy:
+    image: envoyproxy/envoy:v1.32-latest
+    volumes:
+      - ../envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    ports:
+      - "8080:8080"
+      - "9901:9901"   # Envoy admin UI
+    depends_on:
+      - catalog-service
+      - cart-service
+      - currency-service
+      - recommendation-service
+      - checkout-service
+
+  frontend-service:
+    build:
+      context: ../../src/frontend-service
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - envoy

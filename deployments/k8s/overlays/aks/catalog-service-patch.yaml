@@ -18,3 +18,8 @@ spec:
               value: "catalog"
             - name: PG_USER
               value: "<managed-identity-name>"
+
+            - name: CATALOG_BACKEND
+              value: "cosmosdb"
+            - name: COSMOS_ENDPOINT
+              value: "https://<your-cosmos-account>.documents.azure.com:443/"

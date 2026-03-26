@@ -12,6 +12,7 @@ spec:
       labels:
         app: cart-service
     spec:
+      serviceAccountName: cart-service-sa
       containers:
         - name: cart-service
           image: cart-service:latest

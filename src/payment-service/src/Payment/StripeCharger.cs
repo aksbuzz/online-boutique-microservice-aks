@@ -37,9 +37,9 @@ public class StripeCharger : IStripeCharger
                     .Handle<HttpRequestException>()           // network failures
                     .Handle<StripeException>(ex =>
                         ex.StripeError?.Code == null ||       // unknown Stripe error — assume transient
-                        !_permanentCodes.Contains(ex.StripeError.Code) &&
-                         (int)ex.HttpStatusCode >= 500 ||     // Stripe server error
-                         (int)ex.HttpStatusCode == 429)       // rate limited
+                        (!_permanentCodes.Contains(ex.StripeError.Code) &&
+                         ((int)ex.HttpStatusCode >= 500 ||     // Stripe server error
+                         (int)ex.HttpStatusCode == 429)))       // rate limited
             })
             .Build();
     }

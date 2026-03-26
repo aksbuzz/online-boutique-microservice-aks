@@ -1,6 +1,6 @@
 import pgPromise from 'pg-promise';
 import { DefaultAzureCredential } from '@azure/identity';
-import { getLogger } from './logger';
+import { getLogger } from './logger.js';
 
 const logger = getLogger('catalog-service:db');
 

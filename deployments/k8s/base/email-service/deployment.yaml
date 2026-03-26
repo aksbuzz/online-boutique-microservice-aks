@@ -12,6 +12,7 @@ spec:
       labels:
         app: email-service
     spec:
+      serviceAccountName: email-service-sa
       containers:
         - name: email-service
           image: email-service:latest

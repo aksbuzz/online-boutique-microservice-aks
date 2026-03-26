@@ -12,6 +12,7 @@ spec:
       labels:
         app: payment-service
     spec:
+      serviceAccountName: payment-service-sa 
       containers:
         - name: payment-service
           image: payment-service:latest

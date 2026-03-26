@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/aksbuzz/online-boutique/checkout-service/gen/cart";
+
+package boutiqueshop;
+
+service CartService {
+  rpc AddItem(AddItemRequest) returns (google.protobuf.Empty) {}
+  rpc GetCart(GetCartRequest) returns (Cart) {}
+  rpc EmptyCart(EmptyCarRequest) returns (google.protobuf.Empty) {}
+}
+
+message CartItem {
+  string product_id = 1;
+  int32  quantity   = 2;
+}
+
+message AddItemRequest {
+  string   user_id = 1;
+  CartItem item    = 2;
+}
+
+message EmptyCarRequest {
+  string user_id = 1;
+}
+
+message GetCartRequest {
+  string user_id = 1;
+}
+
+message Cart {
+  string            user_id = 1;
+  repeated CartItem items   = 2;
+}

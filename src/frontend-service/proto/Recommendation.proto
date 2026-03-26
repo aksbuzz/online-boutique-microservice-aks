@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "recommendation_service";
+
+package boutiqueshop;
+
+service RecommendationService {
+  rpc ListRecommendations(ListRecommendationsRequest) returns (ListRecommendationsResponse){}
+}
+
+message ListRecommendationsRequest {
+  string user_id = 1;
+  repeated string product_ids = 2;
+}
+
+message ListRecommendationsResponse {
+  repeated string product_ids = 1;
+}

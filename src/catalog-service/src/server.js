@@ -4,8 +4,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { HealthImplementation } from 'grpc-health-check';
 import { getLogger } from './logger.js';
-import { db } from './db.js';
-import { seedDatabase } from './seed.js';
+import { createRepository } from './repository/index.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const logger = getLogger('catalog-service');
@@ -19,6 +18,9 @@ const packageDef = protoLoader.loadSync(PROTO_PATH, {
   oneofs: true,
 });
 const { boutiqueshop } = grpc.loadPackageDefinition(packageDef);
+
+// Initialised in main() after seed completes.
+let repo;
 
 function toProto(row) {
   return {
@@ -37,7 +39,7 @@ function toProto(row) {
 
 async function listProducts(_call, callback) {
   try {
-    const rows = await db.any('SELECT * FROM products ORDER BY name');
+    const rows = await repo.listProducts();
     callback(null, { products: rows.map(toProto) });
   } catch (err) {
     logger.error('listProducts failed', { error: err.message });
@@ -47,10 +49,7 @@ async function listProducts(_call, callback) {
 
 async function getProduct(call, callback) {
   try {
-    const row = await db.oneOrNone(
-      'SELECT * FROM products WHERE id = $1',
-      [call.request.id]
-    );
+    const row = await repo.getProduct(call.request.id);
     if (!row) {
       return callback({
         code: grpc.status.NOT_FOUND,
@@ -66,13 +65,7 @@ async function getProduct(call, callback) {
 
 async function searchProducts(call, callback) {
   try {
-    const q = `%${call.request.query.toLowerCase()}%`;
-    const rows = await db.any(
-      `SELECT * FROM products
-       WHERE LOWER(name) LIKE $1 OR LOWER(description) LIKE $1
-       ORDER BY name`,
-      [q]
-    );
+    const rows = await repo.searchProducts(call.request.query);
     callback(null, { results: rows.map(toProto) });
   } catch (err) {
     logger.error('searchProducts failed', { error: err.message });
@@ -82,8 +75,15 @@ async function searchProducts(call, callback) {
 
 const SERVICE_NAME = 'boutiqueshop.CatalogService';
 
+async function setHealthStatus(health, serving) {
+  const status = serving ? 'SERVING' : 'NOT_SERVING';
+  health.setStatus('', status);
+  health.setStatus(SERVICE_NAME, status);
+}
+
 async function main() {
-  await seedDatabase();
+  repo = createRepository();
+  await repo.seed();
 
   const health = new HealthImplementation({ '': 'NOT_SERVING', [SERVICE_NAME]: 'NOT_SERVING' });
 
@@ -95,30 +95,24 @@ async function main() {
   });
   health.addToServer(server);
 
-  server.bindAsync('0.0.0.0:5002', grpc.ServerCredentials.createInsecure(), (err, port) => {
+  server.bindAsync('0.0.0.0:5002', grpc.ServerCredentials.createInsecure(), async (err, port) => {
     if (err) {
       logger.error('failed to bind', { error: err.message });
       process.exit(1);
     }
     logger.info(`catalog-service listening on port ${port}`);
+    await setHealthStatus(health, true);
   });
 
-  // Mark serving after successful seed, then probe DB every 30s
-  await setHealthStatus(health, true);
+  // Probe the backend every 15s; flip health on DB failure/recovery.
   setInterval(async () => {
     try {
-      await db.one('SELECT 1');
+      await repo.ping();
       await setHealthStatus(health, true);
     } catch {
       await setHealthStatus(health, false);
     }
-  }, 30_000);
-}
-
-async function setHealthStatus(health, serving) {
-  const status = serving ? 'SERVING' : 'NOT_SERVING';
-  health.setStatus('', status);
-  health.setStatus(SERVICE_NAME, status);
+  }, 15_000);
 }
 
 main().catch(err => {

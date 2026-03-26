@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "Catalog.proto";
+
+option go_package = "github.com/aksbuzz/online-boutique/checkout-service/gen/currency";
+
+package boutiqueshop;
+
+service CurrencyService {
+  rpc GetSupportedCurrencies(google.protobuf.Empty) returns (GetSupportedCurrenciesResponse) {}
+  rpc Convert(CurrencyConversionRequest) returns (Money) {}
+}
+
+message GetSupportedCurrenciesResponse {
+  repeated string currency_codes = 1;
+}
+
+message CurrencyConversionRequest {
+  Money  from    = 1;
+  string to_code = 2;
+}

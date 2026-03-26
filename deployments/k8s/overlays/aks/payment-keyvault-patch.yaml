@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: payment-service
+          volumeMounts:
+            - name: payment-keyvault
+              mountPath: /mnt/payment-keyvault
+              readOnly: true
+      volumes:
+        - name: payment-keyvault
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: payment-keyvault
