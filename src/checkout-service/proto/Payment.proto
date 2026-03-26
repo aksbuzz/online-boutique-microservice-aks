@@ -22,9 +22,9 @@ message Money {
 }
 
 message ChargeRequest {
-  Money          amount      = 1;
-  CreditCardInfo credit_card = 2;
-  string         order_id    = 3;
+  string payment_method_id = 1;
+  Money amount = 2;
+  string order_id = 3;
 }
 
 message ChargeResponse {

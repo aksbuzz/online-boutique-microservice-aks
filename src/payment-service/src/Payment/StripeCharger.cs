@@ -1,5 +1,4 @@
 using Polly;
-using Polly.Retry;
 using Stripe;
 
 namespace payment_service.Payment;
@@ -13,17 +12,15 @@ public class StripeCharger : IStripeCharger
         "card_declined", "incorrect_number", "invalid_expiry_year",
         "invalid_expiry_month", "invalid_cvc", "expired_card", "insufficient_funds"
     };
-    private readonly TokenService _tokenService;
-    private readonly ChargeService _chargeService;
-
+    private readonly PaymentIntentService _paymentIntentService;
     // Polly resilience pipeline — wraps calls with retry logic.
     private readonly ResiliencePipeline _pipeline;
+
 
     public StripeCharger(string secretKey)
     {
         var client = new StripeClient(secretKey);
-        _tokenService = new TokenService(client);
-        _chargeService = new ChargeService(client);
+        _paymentIntentService = new PaymentIntentService(client);
 
         _pipeline = new ResiliencePipelineBuilder()
             .AddRetry(new RetryStrategyOptions
@@ -36,53 +33,55 @@ public class StripeCharger : IStripeCharger
                 ShouldHandle = new PredicateBuilder()
                     .Handle<HttpRequestException>()           // network failures
                     .Handle<StripeException>(ex =>
-                        ex.StripeError?.Code == null ||       // unknown Stripe error — assume transient
-                        (!_permanentCodes.Contains(ex.StripeError.Code) &&
-                         ((int)ex.HttpStatusCode >= 500 ||     // Stripe server error
-                         (int)ex.HttpStatusCode == 429)))       // rate limited
+                        ex.StripeError?.Type != "invalid_request_error" && 
+                        (ex.StripeError?.Code == null ||       // unknown Stripe error — assume transient
+                            (!_permanentCodes.Contains(ex.StripeError.Code) &&
+                            ((int)ex.HttpStatusCode >= 500 ||     // Stripe server error
+                            (int)ex.HttpStatusCode == 429))))       // rate limited
             })
             .Build();
     }
 
-    public async Task<string> ChargeAsync(ChargeRequest request, CancellationToken cancellationToken = default)
+    public async Task<string> ChargeAsync(
+        string paymentMethodId,
+        long amountCents,
+        string currency,
+        string? orderId,
+        CancellationToken cancellationToken = default)
     {
         // ExecuteAsync runs the lambda inside the retry pipeline.
         return await _pipeline.ExecuteAsync(async ct =>
         {
-            // Step 1: tokenise the raw card data. Stripe returns a short-lived token
-            // so the actual card number never travels beyond this single call.
-            var token = await _tokenService.CreateAsync(new TokenCreateOptions
-            {
-                Card = new TokenCardOptions
-                {
-                    Number = request.CreditCard.CreditCardNumber,
-                    Cvc = request.CreditCard.CreditCardCvv.ToString(),
-                    ExpYear = request.CreditCard.CreditCardExpirationYear.ToString(),
-                    ExpMonth = request.CreditCard.CreditCardExpirationMonth.ToString(),
-                }
-            }, cancellationToken: ct);
-
-            // Stripe requires the amount in the smallest currency unit (cents for USD).
-            // Money proto stores dollars as units + nanos (billionths), so convert accordingly.
-            long amountCents = request.Amount.Units * 100 + request.Amount.Nanos / 10_000_000;
-
-            // Pass order_id as Stripe's idempotency key — duplicate retries return the
-            // original charge result instead of creating a second charge.
-            var requestOptions = string.IsNullOrEmpty(request.OrderId)
-                ? null
-                : new RequestOptions { IdempotencyKey = request.OrderId };
-
-            // Step 2: create the charge using the token from step 1.
-            var charge = await _chargeService.CreateAsync(new ChargeCreateOptions
+            var options = new PaymentIntentCreateOptions
             {
                 Amount = amountCents,
-                Currency = request.Amount.CurrencyCode.ToLower(), // Stripe expects lowercase, e.g. "usd"
-                Source = token.Id,
-                Description = "Online Boutique order",
-            }, requestOptions, ct);
+                Currency = currency.ToLower(),
+                PaymentMethod = paymentMethodId,
+                Confirm = true, // immediately attempt payment
+                AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+                {
+                    Enabled = true
+                }
+            };
 
-            // charge.Id is the Stripe transaction ID, e.g. "ch_3abc..."
-            return charge.Id;
+            var requestOptions = string.IsNullOrEmpty(orderId)
+                ? null
+                : new RequestOptions { IdempotencyKey = orderId };
+
+            var intent = await _paymentIntentService.CreateAsync(options, requestOptions, ct);
+
+            // Handle required actions (3D Secure, etc.)
+            if (intent.Status == "requires_action")
+            {
+                throw new StripeException("Payment requires additional authentication.");
+            }
+
+            if (intent.Status != "succeeded")
+            {
+                throw new StripeException($"Payment failed with status: {intent.Status}");
+            }
+
+            return intent.Id;
         }, cancellationToken);
     }
 }

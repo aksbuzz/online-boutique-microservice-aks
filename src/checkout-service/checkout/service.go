@@ -128,9 +128,9 @@ func (s *Service) PlaceOrder(ctx context.Context, req *checkoutpb.PlaceOrderRequ
 	// order_id is the Stripe idempotency key — retrying PlaceOrder with the
 	// same order_id returns the original charge, no double charge.
 	chargeResp, err := s.clients.Payment.Charge(ctx, &paymentpb.ChargeRequest{
-		Amount:     &paymentpb.Money{CurrencyCode: total.CurrencyCode, Units: total.Units, Nanos: total.Nanos},
-		CreditCard: toPaymentCard(req.CreditCard),
-		OrderId:    orderID,
+		// TODO: PaymentMethodId:
+		Amount:  &paymentpb.Money{CurrencyCode: total.CurrencyCode, Units: total.Units, Nanos: total.Nanos},
+		OrderId: orderID,
 	})
 	if err != nil {
 		// Pass payment-service status codes through directly (INVALID_ARGUMENT for
@@ -211,19 +211,5 @@ func multiplyMoney(m *catalogpb.Money, n int32) *catalogpb.Money {
 		CurrencyCode: m.CurrencyCode,
 		Units:        m.Units*int64(n) + totalNanos/1_000_000_000,
 		Nanos:        int32(totalNanos % 1_000_000_000),
-	}
-}
-
-// ── Card conversion helper ───────────────────────────────────────────────────
-
-func toPaymentCard(c *checkoutpb.CreditCardInfo) *paymentpb.CreditCardInfo {
-	if c == nil {
-		return nil
-	}
-	return &paymentpb.CreditCardInfo{
-		CreditCardNumber:          c.CreditCardNumber,
-		CreditCardCvv:             c.CreditCardCvv,
-		CreditCardExpirationYear:  c.CreditCardExpirationYear,
-		CreditCardExpirationMonth: c.CreditCardExpirationMonth,
 	}
 }

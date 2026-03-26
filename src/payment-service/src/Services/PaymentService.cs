@@ -17,23 +17,29 @@ public partial class PaymentService(IStripeCharger charger, ILogger<PaymentServi
     {
         try
         {
-            var transactionId = await charger.ChargeAsync(request, context.CancellationToken);
-            logger.LogInformation("Charge succeeded: transaction_id={TransactionId}", transactionId);
+            long amountCents = request.Amount.Units * 100 + request.Amount.Nanos / 10_000_000;
+
+            var transactionId = await charger.ChargeAsync(
+                request.PaymentMethodId,
+                amountCents,
+                request.Amount.CurrencyCode,
+                request.OrderId,
+                context.CancellationToken);
+
+            logger.LogInformation("PaymentIntent succeeded: {TransactionId}", transactionId);
+
             return new ChargeResponse { TransactionId = transactionId };
         }
         catch (StripeException ex) when (ex.StripeError?.Code != null && _cardErrorCodes.Contains(ex.StripeError.Code))
         {
-            logger.LogWarning("Card error: code={Code} message={Message}", ex.StripeError.Code, ex.StripeError.Message);
             throw new RpcException(new Status(StatusCode.InvalidArgument, ex.StripeError.Message ?? ex.Message));
         }
         catch (StripeException ex) when ((int?)ex.HttpStatusCode == 429)
         {
-            logger.LogError("Stripe rate limit exceeded");
             throw new RpcException(new Status(StatusCode.ResourceExhausted, "payment service rate limit exceeded"));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            logger.LogError(ex, "Charge failed");
             throw new RpcException(new Status(StatusCode.Unavailable, "payment service unavailable"));
         }
     }
