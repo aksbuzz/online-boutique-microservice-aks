@@ -4,6 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { checkoutClient } from '../clients';
 import { getUserId } from '../utils/user';
+import { useCartContext } from '../context/CartContext';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
 
@@ -23,6 +24,7 @@ function CheckoutForm() {
   const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
+  const { refreshCart } = useCartContext();
   const selectedCurrency = localStorage.getItem('boutique-currency') ?? 'USD';
 
   const [error, submitAction, isPending] = useActionState(
@@ -57,6 +59,7 @@ function CheckoutForm() {
           },
           paymentMethodId: paymentMethod.id,
         });
+        refreshCart();
         navigate('/success', { state: { order: res.order } });
         return null;
       } catch (e: unknown) {

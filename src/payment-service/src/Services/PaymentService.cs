@@ -38,8 +38,9 @@ public partial class PaymentService(IStripeCharger charger, ILogger<PaymentServi
         {
             throw new RpcException(new Status(StatusCode.ResourceExhausted, "payment service rate limit exceeded"));
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Unexpected payment error for order {OrderId}", request.OrderId);
             throw new RpcException(new Status(StatusCode.Unavailable, "payment service unavailable"));
         }
     }

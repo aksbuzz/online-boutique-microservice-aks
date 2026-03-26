@@ -1,4 +1,5 @@
 using Polly;
+using Polly.Retry;
 using Stripe;
 
 namespace payment_service.Payment;
@@ -57,11 +58,8 @@ public class StripeCharger : IStripeCharger
                 Amount = amountCents,
                 Currency = currency.ToLower(),
                 PaymentMethod = paymentMethodId,
+                PaymentMethodTypes = ["card"],
                 Confirm = true, // immediately attempt payment
-                AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
-                {
-                    Enabled = true
-                }
             };
 
             var requestOptions = string.IsNullOrEmpty(orderId)
