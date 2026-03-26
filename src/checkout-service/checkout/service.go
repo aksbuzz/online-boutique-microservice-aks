@@ -127,11 +127,11 @@ func (s *Service) PlaceOrder(ctx context.Context, req *checkoutpb.PlaceOrderRequ
 	// ── Step 5: Charge ──────────────────────────────────────────────────────
 	// order_id is the Stripe idempotency key — retrying PlaceOrder with the
 	// same order_id returns the original charge, no double charge.
-	chargeResp, err := s.clients.Payment.Charge(ctx, &paymentpb.ChargeRequest{
-		// TODO: PaymentMethodId:
-		Amount:  &paymentpb.Money{CurrencyCode: total.CurrencyCode, Units: total.Units, Nanos: total.Nanos},
-		OrderId: orderID,
-	})
+	chargeResp, err := s.clients.Payment.Charge(ctx, buildChargeRequest(
+		req.PaymentMethodId,
+		total,
+		orderID,
+	))
 	if err != nil {
 		// Pass payment-service status codes through directly (INVALID_ARGUMENT for
 		// card declines, RESOURCE_EXHAUSTED for rate limit, etc.)
@@ -211,5 +211,19 @@ func multiplyMoney(m *catalogpb.Money, n int32) *catalogpb.Money {
 		CurrencyCode: m.CurrencyCode,
 		Units:        m.Units*int64(n) + totalNanos/1_000_000_000,
 		Nanos:        int32(totalNanos % 1_000_000_000),
+	}
+}
+
+// buildChargeRequest constructs the payment ChargeRequest from the order total.
+// paymentMethodId is a Stripe pm_xxx token created by the frontend via Stripe.js.
+func buildChargeRequest(paymentMethodId string, total *catalogpb.Money, orderID string) *paymentpb.ChargeRequest {
+	return &paymentpb.ChargeRequest{
+		PaymentMethodId: paymentMethodId,
+		Amount: &paymentpb.Money{
+			CurrencyCode: total.CurrencyCode,
+			Units:        total.Units,
+			Nanos:        total.Nanos,
+		},
+		OrderId: orderID,
 	}
 }

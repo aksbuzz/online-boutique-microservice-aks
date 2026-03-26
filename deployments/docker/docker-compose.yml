@@ -120,6 +120,8 @@ services:
     build:
       context: ../../src/frontend-service
       dockerfile: Dockerfile
+      args:
+        - VITE_STRIPE_PUBLISHABLE_KEY=pk_test_<your_publishable_key>
     ports:
       - "3000:80"
     depends_on:

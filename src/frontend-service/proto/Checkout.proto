@@ -12,11 +12,11 @@ service CheckoutService {
 }
 
 message PlaceOrderRequest {
-  string         user_id       = 1;
-  string         user_email    = 2;
-  string         user_currency = 3;
-  Address        address       = 4;
-  CreditCardInfo credit_card   = 5;
+  string  user_id           = 1;
+  string  user_email        = 2;
+  string  user_currency     = 3;
+  Address address           = 4;
+  string  payment_method_id = 5;
 }
 
 message PlaceOrderResponse {
@@ -42,11 +42,4 @@ message Address {
   string state          = 3;
   string country        = 4;
   int32  zip_code       = 5;
-}
-
-message CreditCardInfo {
-  string credit_card_number           = 1;
-  int32  credit_card_cvv              = 2;
-  int32  credit_card_expiration_year  = 3;
-  int32  credit_card_expiration_month = 4;
 }

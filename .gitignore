@@ -40,6 +40,12 @@ secrets.env
 .DS_Store
 Thumbs.db
 
+# ── Generated proto code ───────────────────────────────────
+# Go generated files (checkout-service/gen/)
+gen/
+# TypeScript generated files (frontend-service/src/gen/)
+src/gen/
+
 # ── IDEs ───────────────────────────────────────────────────
 .vscode/
 .idea/
