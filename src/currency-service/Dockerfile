@@ -1,1 +1,7 @@
-python -m grpc_tools.protoc --python_out=. --grpc_python_out=. .\proto\Email.proto -I.
+FROM node:22-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY src/ ./src/
+EXPOSE 5005
+CMD ["node", "src/server.js"]
