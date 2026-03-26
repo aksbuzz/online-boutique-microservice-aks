@@ -3,7 +3,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -o checkout-service .
+RUN CGO_ENABLED=0 GOOS=linux go build -o checkout-service .
 
 FROM alpine:latest
 WORKDIR /app
