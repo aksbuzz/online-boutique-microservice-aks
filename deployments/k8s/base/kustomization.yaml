@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - cart-service/
   - catalog-service/
+  - checkout-service/
   - currency-service/
   - email-service/
   - payment-service/

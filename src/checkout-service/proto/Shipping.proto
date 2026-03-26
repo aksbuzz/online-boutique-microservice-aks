@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+import "Cart.proto";
+import "Catalog.proto";
+import "Checkout.proto";
+
+option go_package = "github.com/aksbuzz/online-boutique/checkout-service/gen/shipping";
+
+package boutiqueshop;
+
+service ShippingService {
+  rpc GetQuote(GetQuoteRequest) returns (GetQuoteResponse) {}
+  rpc ShipOrder(ShipOrderRequest) returns (ShipOrderResponse) {}
+}
+
+message GetQuoteRequest {
+  Address           address = 1;
+  repeated CartItem items   = 2;
+}
+
+message GetQuoteResponse {
+  Money cost_usd = 1;
+}
+
+message ShipOrderRequest {
+  Address           address = 1;
+  repeated CartItem items   = 2;
+}
+
+message ShipOrderResponse {
+  string tracking_id = 1;
+}

@@ -1,11 +1,13 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 option csharp_namespace = "catalog_service";
 
 package boutiqueshop;
 
 service CatalogService {
-  rpc ListProducts(Empty) returns (ListProductsResponse) {}
+  rpc ListProducts(google.protobuf.Empty) returns (ListProductsResponse) {}
   rpc GetProduct(GetProductRequest) returns (Product) {}
   rpc SearchProducts(SearchProductsRequest) returns (SearchProductsResponse) {}
 }
@@ -51,5 +53,3 @@ message SearchProductsRequest {
 message SearchProductsResponse {
   repeated Product results = 1;
 }
-
-message Empty {}

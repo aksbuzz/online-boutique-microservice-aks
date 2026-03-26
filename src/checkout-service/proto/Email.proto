@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "Checkout.proto";
+
+option go_package = "github.com/aksbuzz/online-boutique/checkout-service/gen/email";
+
+package boutiqueshop;
+
+service EmailService {
+  rpc SendOrderConfirmation(SendOrderConfirmationRequest) returns (google.protobuf.Empty) {}
+}
+
+message SendOrderConfirmationRequest {
+  string      email = 1;
+  OrderResult order = 2;
+}

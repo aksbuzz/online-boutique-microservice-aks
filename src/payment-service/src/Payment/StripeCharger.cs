@@ -66,6 +66,12 @@ public class StripeCharger : IStripeCharger
             // Money proto stores dollars as units + nanos (billionths), so convert accordingly.
             long amountCents = request.Amount.Units * 100 + request.Amount.Nanos / 10_000_000;
 
+            // Pass order_id as Stripe's idempotency key — duplicate retries return the
+            // original charge result instead of creating a second charge.
+            var requestOptions = string.IsNullOrEmpty(request.OrderId)
+                ? null
+                : new RequestOptions { IdempotencyKey = request.OrderId };
+
             // Step 2: create the charge using the token from step 1.
             var charge = await _chargeService.CreateAsync(new ChargeCreateOptions
             {
@@ -73,7 +79,7 @@ public class StripeCharger : IStripeCharger
                 Currency = request.Amount.CurrencyCode.ToLower(), // Stripe expects lowercase, e.g. "usd"
                 Source = token.Id,
                 Description = "Online Boutique order",
-            }, cancellationToken: ct);
+            }, requestOptions, ct);
 
             // charge.Id is the Stripe transaction ID, e.g. "ch_3abc..."
             return charge.Id;

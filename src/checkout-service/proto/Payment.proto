@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "github.com/aksbuzz/online-boutique/checkout-service/gen/payment";
+
+package greet;
+
+service PaymentService {
+  rpc Charge(ChargeRequest) returns (ChargeResponse) {}
+}
+
+message CreditCardInfo {
+  string credit_card_number           = 1;
+  int32  credit_card_cvv              = 2;
+  int32  credit_card_expiration_year  = 3;
+  int32  credit_card_expiration_month = 4;
+}
+
+message Money {
+  string currency_code = 1;
+  int64  units         = 2;
+  int32  nanos         = 3;
+}
+
+message ChargeRequest {
+  Money          amount      = 1;
+  CreditCardInfo credit_card = 2;
+  string         order_id    = 3;
+}
+
+message ChargeResponse {
+  string transaction_id = 1;
+}

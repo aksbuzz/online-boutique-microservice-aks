@@ -34,6 +34,7 @@ message Money {
 message ChargeRequest {
   Money amount = 1;
   CreditCardInfo credit_card = 2;
+  string order_id = 3;
 }
 
 message ChargeResponse {

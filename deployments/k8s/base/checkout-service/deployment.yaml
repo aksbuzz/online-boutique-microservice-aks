@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout-service
+  template:
+    metadata:
+      labels:
+        app: checkout-service
+    spec:
+      containers:
+        - name: checkout-service
+          image: checkout-service:latest
+          ports:
+            - containerPort: 5008
+          env:
+            - name: CART_SERVICE_ADDR
+              value: "cart-service:5001"
+            - name: CATALOG_SERVICE_ADDR
+              value: "catalog-service:5002"
+            - name: CURRENCY_SERVICE_ADDR
+              value: "currency-service:5005"
+            - name: EMAIL_SERVICE_ADDR
+              value: "email-service:5003"
+            - name: PAYMENT_SERVICE_ADDR
+              value: "payment-service:5006"
+            - name: SHIPPING_SERVICE_ADDR
+              value: "shipping-service:5004"
+          livenessProbe:
+            grpc:
+              port: 5008
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            grpc:
+              port: 5008
+            initialDelaySeconds: 5
+            periodSeconds: 10

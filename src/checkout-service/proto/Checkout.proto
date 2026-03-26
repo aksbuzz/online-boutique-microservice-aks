@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+import "Cart.proto";
+import "Catalog.proto";
+
+option go_package = "github.com/aksbuzz/online-boutique/checkout-service/gen/checkout";
+
+package boutiqueshop;
+
+service CheckoutService {
+  rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderResponse) {}
+}
+
+message PlaceOrderRequest {
+  string         user_id       = 1;
+  string         user_email    = 2;
+  string         user_currency = 3;
+  Address        address       = 4;
+  CreditCardInfo credit_card   = 5;
+}
+
+message PlaceOrderResponse {
+  OrderResult order = 1;
+}
+
+message OrderResult {
+  string            order_id             = 1;
+  string            shipping_tracking_id = 2;
+  Money             shipping_cost        = 3;
+  Address           shipping_address     = 4;
+  repeated OrderItem items               = 5;
+}
+
+message OrderItem {
+  CartItem item = 1;
+  Money    cost = 2;
+}
+
+message Address {
+  string street_address = 1;
+  string city           = 2;
+  string state          = 3;
+  string country        = 4;
+  int32  zip_code       = 5;
+}
+
+message CreditCardInfo {
+  string credit_card_number           = 1;
+  int32  credit_card_cvv              = 2;
+  int32  credit_card_expiration_year  = 3;
+  int32  credit_card_expiration_month = 4;
+}

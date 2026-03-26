@@ -80,3 +80,24 @@ services:
       - CATALOG_SERVICE_ADDR=catalog-service:5002
     depends_on:
       - catalog-service
+
+  checkout-service:
+    build:
+      context: ../../src/checkout-service
+      dockerfile: Dockerfile
+    ports:
+      - "5008:5008"
+    environment:
+      - CART_SERVICE_ADDR=cart-service:5001
+      - CATALOG_SERVICE_ADDR=catalog-service:5002
+      - CURRENCY_SERVICE_ADDR=currency-service:5005
+      - EMAIL_SERVICE_ADDR=email-service:5003
+      - PAYMENT_SERVICE_ADDR=payment-service:5006
+      - SHIPPING_SERVICE_ADDR=shipping-service:5004
+    depends_on:
+      - cart-service
+      - catalog-service
+      - currency-service
+      - email-service
+      - payment-service
+      - shipping-service
