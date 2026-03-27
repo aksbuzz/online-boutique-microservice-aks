@@ -48,10 +48,10 @@ func NewClients(cartAddr, catalogAddr, currencyAddr, emailAddr, paymentAddr, shi
 
 	initClient(cartAddr, func(cc *grpc.ClientConn) { clients.Cart = cartpb.NewCartServiceClient(cc) })
 	initClient(catalogAddr, func(cc *grpc.ClientConn) { clients.Catalog = catalogpb.NewCatalogServiceClient(cc) })
-	initClient(currencyAddr, func(cc *grpc.ClientConn) { clients.Currency = catalogpb.NewCurrencyServiceClient(cc) })
-	initClient(emailAddr, func(cc *grpc.ClientConn) { clients.Email = catalogpb.NewEmailServiceClient(cc) })
-	initClient(paymentAddr, func(cc *grpc.ClientConn) { clients.Payment = catalogpb.NewPaymentServiceClient(cc) })
-	initClient(shippingAddr, func(cc *grpc.ClientConn) { clients.Shipping = catalogpb.NewShippingServiceClient(cc) })
+	initClient(currencyAddr, func(cc *grpc.ClientConn) { clients.Currency = currencypb.NewCurrencyServiceClient(cc) })
+	initClient(emailAddr, func(cc *grpc.ClientConn) { clients.Email = emailpb.NewEmailServiceClient(cc) })
+	initClient(paymentAddr, func(cc *grpc.ClientConn) { clients.Payment = paymentpb.NewPaymentServiceClient(cc) })
+	initClient(shippingAddr, func(cc *grpc.ClientConn) { clients.Shipping = shippingpb.NewShippingServiceClient(cc) })
 
 	if err != nil {
 		return nil, err
