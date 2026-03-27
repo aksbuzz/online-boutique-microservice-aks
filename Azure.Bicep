@@ -12,6 +12,8 @@ param managedIdentityName string = 'online-boutique-identity'
 param k8sNamespace string = 'default'
 param k8sServiceAccountName string = 'online-boutique-sa'
 
+param redisCacheName string = 'redis-${uniqueString(resourceGroup().id)}'
+
 param dbServerName string = 'pg-boutique-${uniqueString(resourceGroup().id)}'
 param dbAdminUser string = 'pgadmin'
 @secure()
@@ -83,6 +85,21 @@ resource keyVault 'Microsoft.KeyVault/vaults@2025-05-01' = {
     }
     tenantId: subscription().tenantId
     enableRbacAuthorization: true
+  }
+}
+
+// Redis
+resource redisCache 'Microsoft.Cache/redis@2024-11-01' = {
+  name: redisCacheName
+  location: location
+  properties: {
+    sku: {
+      name: 'Basic'
+      family: 'C'
+      capacity: 0
+    }
+    enableNonSslPort: false
+    publicNetworkAccess: 'Enabled'
   }
 }
 
@@ -170,8 +187,18 @@ resource kvSecretReaderRole 'Microsoft.Authorization/roleAssignments@2022-04-01'
   }
 }
 
+// Store Redis conn in KV
+resource redisSecret 'Microsoft.KeyVault/vaults/secrets@2025-05-01' = {
+  parent: keyVault
+  name: 'redis-addr'
+  properties: {
+    value: '${redisCache.properties.hostName}:6380,password=${redisCache.listKeys().primaryKey},ssl=True,abortConnect=False'
+  }
+}
+
 // Outputs
 output aksOidcIssuerUrl string = aks.properties.oidcIssuerProfile.issuerURL
 output managedIdentityClientId string = workloadIdentity.properties.clientId
 output keyVaultUri string = keyVault.properties.vaultUri
 output postgresServerName string = postgresServer.name
+output redisName string = redisCache.name
