@@ -38,15 +38,14 @@ az group create --name online-boutique-rg --location centralindia
 ```
 
 ### Step 4: Deploy Infrastructure via Azure Bicep
-Instead of running individual commands for AKS, ACR, Key Vault, and PostgreSQL, we will deploy them all at once using your Bicep file (`main.bicep`). 
-
+I
 *Note: You will be prompted to enter a secure password for the PostgreSQL database (`dbAdminPassword`).*
 
 ```bash
 # Deploy all infrastructure
 az deployment group create \
   --resource-group online-boutique-rg \
-  --template-file main.bicep
+  --template-file Azure.bicep
 
 # IMPORTANT: After the deployment finishes, note down the "Outputs" printed in your terminal. 
 # You will need the ACR Name, Postgres FQDN, Key Vault Name, and Managed Identity Client ID for the next steps!

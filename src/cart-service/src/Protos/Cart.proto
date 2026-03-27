@@ -7,7 +7,7 @@ package boutiqueshop;
 service CartService {
   rpc AddItem(AddItemRequest) returns (Empty) {}
   rpc GetCart(GetCartRequest) returns (Cart) {}
-  rpc EmptyCart(EmptyCarRequest) returns (Empty) {}
+  rpc EmptyCart(EmptyCartRequest) returns (Empty) {}
 }
 
 message CartItem {
@@ -20,7 +20,7 @@ message AddItemRequest {
   CartItem item = 2;
 }
 
-message EmptyCarRequest {
+message EmptyCartRequest {
   string user_id = 1;
 }
 

@@ -1,6 +1,8 @@
 package checkout
 
 import (
+	"fmt"
+
 	cartpb "github.com/aksbuzz/online-boutique/checkout-service/gen/cart"
 	catalogpb "github.com/aksbuzz/online-boutique/checkout-service/gen/catalog"
 	currencypb "github.com/aksbuzz/online-boutique/checkout-service/gen/currency"
@@ -19,23 +21,49 @@ type Clients struct {
 	Email    emailpb.EmailServiceClient
 	Payment  paymentpb.PaymentServiceClient
 	Shipping shippingpb.ShippingServiceClient
+	conns    []*grpc.ClientConn
 }
 
-func NewClients(cartAddr, catalogAddr, currencyAddr, emailAddr, paymentAddr, shippingAddr string) *Clients {
-	return &Clients{
-		Cart:     cartpb.NewCartServiceClient(dial(cartAddr)),
-		Catalog:  catalogpb.NewCatalogServiceClient(dial(catalogAddr)),
-		Currency: currencypb.NewCurrencyServiceClient(dial(currencyAddr)),
-		Email:    emailpb.NewEmailServiceClient(dial(emailAddr)),
-		Payment:  paymentpb.NewPaymentServiceClient(dial(paymentAddr)),
-		Shipping: shippingpb.NewShippingServiceClient(dial(shippingAddr)),
+func (c *Clients) Close() {
+	for _, conn := range c.conns {
+		conn.Close()
 	}
 }
 
-func dial(addr string) *grpc.ClientConn {
+func NewClients(cartAddr, catalogAddr, currencyAddr, emailAddr, paymentAddr, shippingAddr string) (*Clients, error) {
+	var err error
+	clients := &Clients{}
+
+	initClient := func(addr string, setter func(*grpc.ClientConn)) {
+		if err != nil {
+			return
+		}
+		var conn *grpc.ClientConn
+		conn, err = dial(addr)
+		if err == nil {
+			setter(conn)
+		}
+		clients.conns = append(clients.conns, conn)
+	}
+
+	initClient(cartAddr, func(cc *grpc.ClientConn) { clients.Cart = cartpb.NewCartServiceClient(cc) })
+	initClient(catalogAddr, func(cc *grpc.ClientConn) { clients.Catalog = catalogpb.NewCatalogServiceClient(cc) })
+	initClient(currencyAddr, func(cc *grpc.ClientConn) { clients.Currency = catalogpb.NewCurrencyServiceClient(cc) })
+	initClient(emailAddr, func(cc *grpc.ClientConn) { clients.Email = catalogpb.NewEmailServiceClient(cc) })
+	initClient(paymentAddr, func(cc *grpc.ClientConn) { clients.Payment = catalogpb.NewPaymentServiceClient(cc) })
+	initClient(shippingAddr, func(cc *grpc.ClientConn) { clients.Shipping = catalogpb.NewShippingServiceClient(cc) })
+
+	if err != nil {
+		return nil, err
+	}
+
+	return clients, nil
+}
+
+func dial(addr string) (*grpc.ClientConn, error) {
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		panic("grpc dial " + addr + ": " + err.Error())
+		return nil, fmt.Errorf("failed to create gRPC client for %s: %w", addr, err)
 	}
-	return conn
+	return conn, nil
 }

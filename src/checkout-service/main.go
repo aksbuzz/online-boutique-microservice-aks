@@ -24,7 +24,7 @@ func getenv(key, def string) string {
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	clients := checkout.NewClients(
+	clients, err := checkout.NewClients(
 		getenv("CART_SERVICE_ADDR", "cart-service:5001"),
 		getenv("CATALOG_SERVICE_ADDR", "catalog-service:5002"),
 		getenv("CURRENCY_SERVICE_ADDR", "currency-service:5005"),
@@ -32,6 +32,11 @@ func main() {
 		getenv("PAYMENT_SERVICE_ADDR", "payment-service:5006"),
 		getenv("SHIPPING_SERVICE_ADDR", "shipping-service:5004"),
 	)
+	defer clients.Close()
+	if err != nil {
+		log.Error("failed to initialize downstream clients", "err", err)
+		os.Exit(1)
+	}
 
 	port := getenv("PORT", "5008")
 	lis, err := net.Listen("tcp", ":"+port)

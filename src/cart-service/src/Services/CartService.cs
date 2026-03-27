@@ -15,10 +15,11 @@ public class CartService(ICartStore _cartStore) : cart_service.CartService.CartS
 
     public override Task<Cart> GetCart(GetCartRequest request, ServerCallContext context)
     {
-        return _cartStore.GetCartAsync(request.UserId);
+        var cart = await _cartStore.GetCartAsync(request.UserId, context.CancellationToken);
+        return cart; 
     }
 
-    public override async Task<Empty> EmptyCart(EmptyCarRequest request, ServerCallContext context)
+    public override async Task<Empty> EmptyCart(EmptyCartRequest request, ServerCallContext context)
     {
         await _cartStore.EmptyCartAsync(request.UserId);
         return Empty;

@@ -9,7 +9,7 @@ package boutiqueshop;
 service CartService {
   rpc AddItem(AddItemRequest) returns (google.protobuf.Empty) {}
   rpc GetCart(GetCartRequest) returns (Cart) {}
-  rpc EmptyCart(EmptyCarRequest) returns (google.protobuf.Empty) {}
+  rpc EmptyCart(EmptyCartRequest) returns (google.protobuf.Empty) {}
 }
 
 message CartItem {
@@ -22,7 +22,7 @@ message AddItemRequest {
   CartItem item    = 2;
 }
 
-message EmptyCarRequest {
+message EmptyCartRequest {
   string user_id = 1;
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
@@ -120,7 +121,13 @@ func (s *Service) PlaceOrder(ctx context.Context, req *checkoutpb.PlaceOrderRequ
 	// ── Step 4: Sum total ───────────────────────────────────────────────────
 	total := &catalogpb.Money{CurrencyCode: req.UserCurrency}
 	for i, item := range cart.Items {
+		if converted[i] == nil {
+			return nil, fmt.Errorf("failed to get converted price for product %q", &item.ProductId)
+		}
 		total = addMoney(total, multiplyMoney(converted[i], item.Quantity))
+	}
+	if shippingConverted == nil {
+		return nil, fmt.Errorf("failed to calculate shipping cost")
 	}
 	total = addMoney(total, shippingConverted)
 
@@ -170,23 +177,31 @@ func (s *Service) PlaceOrder(ctx context.Context, req *checkoutpb.PlaceOrderRequ
 	}
 
 	// ── Step 7: Send confirmation email (fire-and-forget) ───────────────────
-	go func() {
-		_, emailErr := s.clients.Email.SendOrderConfirmation(context.Background(), &emailpb.SendOrderConfirmationRequest{
+	go func(originalCtx context.Context, orderDetails *checkoutpb.OrderResult) {
+		emailCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		_, emailErr := s.clients.Email.SendOrderConfirmation(emailCtx, &emailpb.SendOrderConfirmationRequest{
 			Email: req.UserEmail,
 			Order: result,
 		})
+
 		if emailErr != nil {
 			log.Warn("send confirmation email failed", "err", emailErr)
 		}
-	}()
+	}(ctx, result)
 
-	// ── Step 8: Empty cart (fire-and-forget) ────────────────────────────────
-	go func() {
-		_, cartErr := s.clients.Cart.EmptyCart(context.Background(), &cartpb.EmptyCarRequest{UserId: req.UserId})
-		if cartErr != nil {
-			log.Warn("empty cart failed", "err", cartErr)
-		}
-	}()
+	// ── Step 8: Empty cart ────────────────────────────────
+	cartCtx, cancelCart := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelCart()
+
+	_, cartErr := s.clients.Cart.EmptyCart(cartCtx, &cartpb.EmptyCartRequest{UserId: req.UserId})
+	if cartErr != nil {
+		log.Error("failed to empty cart after successful payment",
+			"err", cartErr,
+			"user_id", req.UserId,
+			"transaction_id", chargeResp.TransactionId)
+	}
 
 	log.Info("order placed", "transaction_id", chargeResp.TransactionId, "tracking_id", trackingID)
 	return &checkoutpb.PlaceOrderResponse{Order: result}, nil
@@ -206,6 +221,10 @@ func addMoney(a, b *catalogpb.Money) *catalogpb.Money {
 
 // multiplyMoney multiplies a Money value by a scalar quantity.
 func multiplyMoney(m *catalogpb.Money, n int32) *catalogpb.Money {
+	if m == nil {
+		return &catalogpb.Money{}
+	}
+
 	totalNanos := int64(m.Nanos) * int64(n)
 	return &catalogpb.Money{
 		CurrencyCode: m.CurrencyCode,
