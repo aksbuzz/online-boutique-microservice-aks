@@ -1,0 +1,31 @@
+name: deploy — shipping-service
+
+on:
+  push:
+    tags:
+      - "shipping-service/v*"
+    branches:
+      - main
+    paths:
+      - "src/shipping-service/**"
+      - "deployments/k8s/base/shipping-service/**"
+  workflow_dispatch:
+    inputs:
+      semver_tag:
+        description: "Semver tag to deploy (e.g. v1.2.3). Leave empty for a branch deploy."
+        required: false
+        default: ""
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_build-and-deploy.yml
+    with:
+      service: shipping-service
+      dockerfile: src/shipping-service/Dockerfile
+      semver_tag: >-
+        ${{
+          github.event_name == 'workflow_dispatch' && inputs.semver_tag != '' && inputs.semver_tag ||
+          startsWith(github.ref, 'refs/tags/shipping-service/') && github.ref_name != '' &&
+          github.ref_name || ''
+        }}
+    secrets: inherit

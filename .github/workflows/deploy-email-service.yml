@@ -1,0 +1,31 @@
+name: deploy — email-service
+
+on:
+  push:
+    tags:
+      - "email-service/v*"
+    branches:
+      - main
+    paths:
+      - "src/email-service/**"
+      - "deployments/k8s/base/email-service/**"
+  workflow_dispatch:
+    inputs:
+      semver_tag:
+        description: "Semver tag to deploy (e.g. v1.2.3). Leave empty for a branch deploy."
+        required: false
+        default: ""
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_build-and-deploy.yml
+    with:
+      service: email-service
+      dockerfile: src/email-service/Dockerfile
+      semver_tag: >-
+        ${{
+          github.event_name == 'workflow_dispatch' && inputs.semver_tag != '' && inputs.semver_tag ||
+          startsWith(github.ref, 'refs/tags/email-service/') && github.ref_name != '' &&
+          github.ref_name || ''
+        }}
+    secrets: inherit

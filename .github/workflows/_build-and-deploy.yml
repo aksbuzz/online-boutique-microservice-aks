@@ -1,0 +1,161 @@
+name: _build-and-deploy (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+        description: "Service name, e.g. payment-service"
+      dockerfile:
+        required: true
+        type: string
+        description: "Path to Dockerfile relative to repo root"
+      semver_tag:
+        required: false
+        type: string
+        default: ""
+        description: "Semver tag if triggered by a tag push, e.g. v1.4.2"
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      ACR_LOGIN_SERVER:
+        required: true
+      RESOURCE_GROUP:
+        required: true
+      VITE_STRIPE_PUBLISHABLE_KEY:
+        required: false   # only needed for frontend-service
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Log in to Azure
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to ACR
+        run: az acr login --name ${{ secrets.ACR_LOGIN_SERVER }}
+
+      # Image tag to use.
+      - name: Resolve image tag
+        id: tag
+        run: |
+          if [[ -n "${{ inputs.semver_tag }}" ]]; then
+            echo "tag=${{ inputs.semver_tag }}" >> $GITHUB_OUTPUT
+          else
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            BRANCH=$(echo "${GITHUB_REF_NAME}" | sed 's|/|-|g')
+            echo "tag=${BRANCH}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: |
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ inputs.service }}:${{ steps.tag.outputs.tag }}
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ inputs.service }}:latest
+          build-args: |
+            VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # outputs the digest in DOCKER_METADATA_OUTPUT_DIGEST
+          outputs: type=registry
+
+      # Resolve the SHA digest of the image we just pushed.
+      - name: Resolve SHA digest
+        id: digest
+        run: |
+          DIGEST=$(docker buildx imagetools inspect \
+            "${{ secrets.ACR_LOGIN_SERVER }}/${{ inputs.service }}:${{ steps.tag.outputs.tag }}" \
+            --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+          echo "Resolved digest: ${DIGEST}"
+
+      # Patch kustomization.yaml - replace the image entry for this service
+      # with the resolved SHA digest.
+      - name: Patch kustomization.yaml with digest
+        run: |
+          python3 - <<'EOF'
+          import re, os, sys
+
+          service = os.environ['SERVICE']
+          acr     = os.environ['ACR_LOGIN_SERVER']
+          digest  = os.environ['DIGEST']
+
+          kustomization_path = 'deployments/k8s/overlays/aks/kustomization.yaml'
+          with open(kustomization_path, 'r') as f:
+              content = f.read()
+
+          pattern = (
+              r'(  - name: ' + re.escape(service) + r'\n'
+              r'    newName: [^\n]+\n)'
+              r'(?:    newTag: [^\n]+\n)?'
+              r'(?:    digest: [^\n]+\n)?'
+          )
+          replacement = (
+              r'\1'
+              f'    digest: {digest}\n'
+          )
+          new_content, count = re.subn(pattern, replacement, content)
+          if count == 0:
+              print(f"ERROR: Could not find image entry for {service} in {kustomization_path}", file=sys.stderr)
+              sys.exit(1)
+
+          with open(kustomization_path, 'w') as f:
+              f.write(new_content)
+
+          print(f"Patched {service} → {digest}")
+          EOF
+        env:
+          SERVICE: ${{ inputs.service }}
+          ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+          DIGEST: ${{ steps.digest.outputs.digest }}
+
+      - name: Commit and push manifest change
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add deployments/k8s/overlays/aks/kustomization.yaml
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore(deploy): ${{ inputs.service }} → ${{ steps.digest.outputs.digest }} (${{ steps.tag.outputs.tag }})"
+          git push
+
+      # Apply to AKS - only if this is a production deploy (semver tag present).
+      # For staging/branch deploys, you may prefer a manual approval step.
+      - name: Configure kubectl
+        if: inputs.semver_tag != ''
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          cluster-name: online-boutique-aks
+
+      - name: Apply Kustomize overlay
+        if: inputs.semver_tag != ''
+        run: |
+          kubectl apply -k deployments/k8s/overlays/aks/
+          kubectl rollout status deployment/${{ inputs.service }} --timeout=5m

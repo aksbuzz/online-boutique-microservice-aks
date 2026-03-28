@@ -1,0 +1,38 @@
+name: deploy — payment-service
+
+on:
+  push:
+    # Trigger on semver tag: payment-service/v1.4.2
+    tags:
+      - "payment-service/v*"
+    # Also trigger on direct pushes to main that touch this service's source
+    branches:
+      - main
+    paths:
+      - "src/payment-service/**"
+      - "deployments/k8s/base/payment-service/**"
+      - "deployments/k8s/overlays/aks/payment-service-patch.yaml"
+      - "deployments/k8s/overlays/aks/payment-keyvault*.yaml"
+
+  # Allow manual trigger from the GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      semver_tag:
+        description: "Semver tag to deploy (e.g. v1.4.2). Leave empty for a branch deploy."
+        required: false
+        default: ""
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_build-and-deploy.yml
+    with:
+      service: payment-service
+      dockerfile: src/payment-service/Dockerfile
+      # Extract the version from the tag (payment-service/v1.4.2 → v1.4.2)
+      semver_tag: >-
+        ${{
+          github.event_name == 'workflow_dispatch' && inputs.semver_tag != '' && inputs.semver_tag ||
+          startsWith(github.ref, 'refs/tags/payment-service/') && github.ref_name != '' &&
+          github.ref_name || ''
+        }}
+    secrets: inherit
