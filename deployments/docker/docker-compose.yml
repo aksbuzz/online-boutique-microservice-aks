@@ -15,8 +15,8 @@ services:
 
   cart-service:
     build:
-      context: ../../src/cart-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/cart-service/Dockerfile
     ports:
       - "5001:5001"
     environment:
@@ -26,8 +26,8 @@ services:
 
   catalog-service:
     build:
-      context: ../../src/catalog-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/catalog-service/Dockerfile
     ports:
       - "5002:5002"
     environment:
@@ -40,8 +40,8 @@ services:
 
   email-service:
     build:
-      context: ../../src/email-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/email-service/Dockerfile
     ports:
       - "5003:5003"
     environment:
@@ -49,31 +49,31 @@ services:
 
   shipping-service:
     build:
-      context: ../../src/shipping-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/shipping-service/Dockerfile
     ports:
       - "5004:5004"
 
   currency-service:
     build:
-      context: ../../src/currency-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/currency-service/Dockerfile
     ports:
       - "5005:5005"
 
   payment-service:
     build:
-      context: ../../src/payment-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/payment-service/Dockerfile
     ports:
       - "5006:5006"
     environment:
-      - STRIPE_SECRET_KEY=sk_test_<your_test_key>
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY must be set in .env}
 
   recommendation-service:
     build:
-      context: ../../src/recommendation-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/recommendation-service/Dockerfile
     ports:
       - "5007:5007"
     environment:
@@ -83,8 +83,8 @@ services:
 
   checkout-service:
     build:
-      context: ../../src/checkout-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/checkout-service/Dockerfile
     ports:
       - "5008:5008"
     environment:
@@ -118,10 +118,10 @@ services:
 
   frontend-service:
     build:
-      context: ../../src/frontend-service
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: src/frontend-service/Dockerfile
       args:
-        - VITE_STRIPE_PUBLISHABLE_KEY=pk_test_<your_publishable_key>
+        - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY:?VITE_STRIPE_PUBLISHABLE_KEY must be set in .env}
     ports:
       - "3000:80"
     depends_on:

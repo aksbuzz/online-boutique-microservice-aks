@@ -1,9 +1,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
-COPY src/shipping-service.csproj ./src/
-RUN dotnet restore ./src/shipping-service.csproj
-COPY src/ ./src/
-RUN dotnet publish ./src/shipping-service.csproj -c Release -o /out --no-restore
+COPY src/shipping-service/src/shipping-service.csproj ./
+RUN dotnet restore shipping-service.csproj
+COPY src/shipping-service/src/ .
+RUN dotnet publish -c Release -o /out shipping-service.csproj
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app

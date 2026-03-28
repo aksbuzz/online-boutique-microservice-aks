@@ -9,10 +9,10 @@ components:
   - ../../components/network-policies
 
 patches:
-  - path: email-service-patch.yaml
-    target:
-      kind: Deployment
-      name: email-service
+#   - path: email-service-patch.yaml
+#     target:
+#       kind: Deployment
+#       name: email-service
   - path: catalog-service-patch.yaml
     target:
       kind: Deployment

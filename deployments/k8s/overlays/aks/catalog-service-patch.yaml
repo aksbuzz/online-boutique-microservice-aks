@@ -12,14 +12,15 @@ spec:
       containers:
         - name: catalog-service
           env:
+            - name: CATALOG_BACKEND
+              value: "postgres"
+
             - name: PG_HOST
-              value: "<your-server>.postgres.database.azure.com"
+              value: "<POSTGRES_SERVER_NAME>.postgres.database.azure.com"
             - name: PG_DATABASE
               value: "catalog"
             - name: PG_USER
-              value: "<managed-identity-name>"
+              value: "<CATALOG_MANAGED_IDENTITY_NAME>"
 
-            - name: CATALOG_BACKEND
-              value: "cosmosdb"
             - name: COSMOS_ENDPOINT
               value: "https://<your-cosmos-account>.documents.azure.com:443/"

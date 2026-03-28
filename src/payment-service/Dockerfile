@@ -1,9 +1,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
-COPY src/payment-service.csproj ./src/
-RUN dotnet restore ./src/payment-service.csproj
-COPY src/ ./src/
-RUN dotnet publish ./src/payment-service.csproj -c Release -o /out --no-restore
+COPY src/payment-service/src/payment-service.csproj ./
+RUN dotnet restore payment-service.csproj
+COPY src/payment-service/src/ .
+RUN dotnet publish  -c Release -o /out payment-service.csproj
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
